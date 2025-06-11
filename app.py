@@ -1,51 +1,54 @@
-import pandas as pd
+import streamlit as st
 import numpy as np
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
 import joblib
 
-# Load your dataset (change path as needed)
-df = pd.read_csv("autoinsurance.csv")
+# Load model and scaler
+model = joblib.load("model.pkl")
+scaler = joblib.load("scaler.pkl")
 
-# ---- Select the 10 features ----
-features = [
-    "Age",
-    "Gender",
-    "Vehicle_Age",
-    "Vehicle_Damage",
-    "Annual_Premium",
-    "Policy_Sales_Channel",
-    "Vintage",
-    "Region_Code",
-    "Driving_License",
-    "Previously_Insured"
-]
+st.title("Auto Insurance Claim Prediction")
 
-# Encode categorical features to match app
-df["Gender"] = df["Gender"].map({"Male": 1, "Female": 0})
-df["Vehicle_Damage"] = df["Vehicle_Damage"].map({"Yes": 1, "No": 0})
-df["Vehicle_Age"] = df["Vehicle_Age"].map({
+# Input fields
+age = st.number_input("Age", min_value=18, max_value=100, value=30)
+gender = st.selectbox("Gender", ["Male", "Female"])
+vehicle_age = st.selectbox("Vehicle Age", ["> 2 Years", "1-2 Year", "< 1 Year"])
+vehicle_damage = st.selectbox("Vehicle Damage", ["Yes", "No"])
+annual_premium = st.number_input("Annual Premium", value=30000)
+policy_sales_channel = st.number_input("Policy Sales Channel", value=26)
+vintage = st.number_input("Vintage (Customer since days)", value=150)
+region_code = st.number_input("Region Code", value=28)
+driving_license = st.radio("Driving License", [1, 0])
+previously_insured = st.radio("Previously Insured", [1, 0])
+
+# Encoding categorical values (same as during training)
+gender_encoded = 1 if gender == "Male" else 0
+vehicle_age_encoded = {
     "> 2 Years": 2,
     "1-2 Year": 1,
     "< 1 Year": 0
-})
+}[vehicle_age]
+vehicle_damage_encoded = 1 if vehicle_damage == "Yes" else 0
 
-# Input features and target
-X = df[features]
-y = df["Response"]  # Or whatever your target column is
+# Create feature array
+input_data = np.array([
+    age,
+    gender_encoded,
+    vehicle_age_encoded,
+    vehicle_damage_encoded,
+    annual_premium,
+    policy_sales_channel,
+    vintage,
+    region_code,
+    driving_license,
+    previously_insured
+]).reshape(1, -1)
 
-# Split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# ---- Fit and save StandardScaler ----
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-joblib.dump(scaler, "scaler.pkl")
-
-# ---- Train and save model ----
-model = RandomForestClassifier()
-model.fit(X_train_scaled, y_train)
-joblib.dump(model, "model.pkl")
-
-print("✅ Model and scaler saved.")
+# Predict
+if st.button("Predict Claim"):
+    try:
+        input_scaled = scaler.transform(input_data)
+        prediction = model.predict(input_scaled)
+        result = "Will File a Claim" if prediction[0] == 1 else "No Claim"
+        st.success(f"Prediction: {result}")
+    except Exception as e:
+        st.error(f"Error: {e}")
