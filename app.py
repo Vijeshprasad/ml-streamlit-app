@@ -136,45 +136,45 @@ claim_severity_map = {"None": 0, "Low": 1, "Medium": 2, "High": 3}
 claim_frequency_map = {"None": 0, "Rare": 1, "Occasional": 2, "Frequent": 3}
 yes_no_map = {"Yes": 1, "No": 0}
 
-# Create input array with all 33 features in the correct order
+# Create input array with all features in the correct order
 input_data = [
-    age,
+    int(age),
     gender_map[gender],
     marital_map[marital_status],
     education_map[education],
     employment_map[employment_status],
     occupation_map[occupation],
-    income,
+    int(income),
     location_map[location],
-    credit_score,
-    years_at_residence,
+    int(credit_score),
+    int(years_at_residence),
     coverage_map[coverage],
     policy_map[policy_type],
-    renew_offer,
+    int(renew_offer),  # Convert to int
     policy_term_map[policy_term],
-    deductible,
+    int(deductible),
     sales_map[sales_channel],
-    months_since_policy_inception,
-    number_of_policies,
+    int(months_since_policy_inception),
+    int(number_of_policies),
     prior_insurance_map[prior_insurance],
     loyalty_discount_map[loyalty_discount],
     vehicle_class_map[vehicle_class],
     vehicle_size_map[vehicle_size],
-    vehicle_age,
-    vehicle_value,
-    anti_lock_brakes,
-    monthly_premium,
-    total_claim_amount,
-    annual_mileage,
-    safety_features,
-    garaged,
-    months_since_last_claim,
-    number_of_open_complaints,
-    past_claims,
+    int(vehicle_age),
+    int(vehicle_value),
+    yes_no_map[anti_lock_brakes],
+    int(monthly_premium),
+    float(total_claim_amount),
+    int(annual_mileage),
+    int(safety_features),
+    yes_no_map[garaged],
+    int(months_since_last_claim),
+    int(number_of_open_complaints),
+    int(past_claims),
     claim_severity_map[claim_severity],
-    customer_lifetime_value,
+    int(customer_lifetime_value),
     state_map[state],
-    fraud_reports,
+    int(fraud_reports),
     claim_frequency_map[claim_frequency]
 ]
 
@@ -195,7 +195,9 @@ if st.button("Predict Claim Likelihood"):
             prediction = 1 if prediction_proba >= 0.5 else 0
         else:
             # Demo mode - random probability between 0.1 and 0.9 based on inputs
-            risk_score = sum(input_data) / (len(input_data) * max(input_data)) if max(input_data) > 0 else 0.5
+            # Ensure all values are numeric for calculation
+            numeric_inputs = [x for x in input_data if isinstance(x, (int, float))]
+            risk_score = sum(numeric_inputs) / (len(numeric_inputs) * max(numeric_inputs)) if max(numeric_inputs) > 0 else 0.5
             prediction_proba = min(max(0.1, risk_score * 1.5), 0.9)
             prediction = 1 if prediction_proba >= 0.5 else 0
         
@@ -268,18 +270,3 @@ st.markdown("""
 2. Save the model and scaler as .pkl files
 3. Uncomment the model loading code at the top
 """)
-
-# Add some styling
-st.markdown("""
-<style>
-    .stProgress > div > div > div > div {
-        background-color: #FF4B4B;
-    }
-    .st-b7 {
-        color: white;
-    }
-    .st-c0 {
-        background-color: #0E1117;
-    }
-</style>
-""", unsafe_allow_html=True)
