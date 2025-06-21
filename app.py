@@ -2,11 +2,10 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-from sklearn.preprocessing import StandardScaler
 
-# Load pre-trained model and scaler (you'll need to have these files)
-# model = joblib.load("model.pkl")
-# scaler = joblib.load("scaler.pkl")
+# Load pre-trained model and scaler
+model = joblib.load("model.pkl")
+scaler = joblib.load("scaler.pkl")
 
 st.title("Auto Insurance Claim Prediction")
 
@@ -19,7 +18,7 @@ with col1:
     gender = st.selectbox("Gender", ["Male", "Female"])
     marital_status = st.selectbox("Marital Status", ["Single", "Married", "Divorced"])
     employment_status = st.selectbox("Employment Status", ["Employed", "Unemployed", "Retired", "Medical Leave", "Disabled"])
-    
+
 with col2:
     education = st.selectbox("Education Level", ["High School or Below", "College", "Bachelor", "Master", "Doctor"])
     income = st.number_input("Annual Income ($)", min_value=0, value=50000)
@@ -32,7 +31,7 @@ with policy_col1:
     coverage = st.selectbox("Coverage Type", ["Basic", "Extended", "Premium"])
     policy_type = st.selectbox("Policy Type", ["Personal Auto", "Corporate Auto", "Special Auto"])
     renew_offer = st.selectbox("Renewal Offer Type", ["1", "2", "3", "4"])
-    
+
 with policy_col2:
     sales_channel = st.selectbox("Sales Channel", ["Web", "Branch", "Agent", "Call Center"])
     months_since_policy_inception = st.number_input("Months Since Policy Inception", min_value=0, value=12)
@@ -44,7 +43,7 @@ vehicle_col1, vehicle_col2 = st.columns(2)
 with vehicle_col1:
     vehicle_class = st.selectbox("Vehicle Class", ["Two-Door Car", "Four-Door Car", "SUV", "Sports Car", "Luxury Car", "Luxury SUV"])
     vehicle_size = st.selectbox("Vehicle Size", ["Small", "Medsize", "Large"])
-    
+
 with vehicle_col2:
     monthly_premium = st.number_input("Monthly Premium ($)", min_value=0, value=100)
     total_claim_amount = st.number_input("Total Claim Amount ($)", min_value=0.0, value=0.0)
@@ -55,7 +54,7 @@ claim_col1, claim_col2 = st.columns(2)
 with claim_col1:
     months_since_last_claim = st.number_input("Months Since Last Claim", min_value=0, value=12)
     number_of_open_complaints = st.number_input("Number of Open Complaints", min_value=0, value=0)
-    
+
 with claim_col2:
     customer_lifetime_value = st.number_input("Customer Lifetime Value ($)", min_value=0, value=10000)
     state = st.selectbox("State", ["California", "Washington", "Oregon", "Arizona", "Nevada"])
@@ -98,7 +97,7 @@ state_map = {
     "Nevada": 4
 }
 
-# Create input array in the same order as model training
+# Create input array
 input_data = [
     customer_lifetime_value,
     coverage_map[coverage],
@@ -122,57 +121,45 @@ input_data = [
     state_map[state]
 ]
 
-# Add any additional features that were in your model
-# For example, if your model used indexed versions of these features:
+# Extend with additional features if used during model training
 input_data.extend([
-    coverage_map[coverage],  # Coverage Index
-    education_map[education],  # Education Index
-    employment_map[employment_status],  # Employment Status Index
-    location_map[location],  # Location Index
-    marital_map[marital_status],  # Marital Status Index
-    policy_map[policy_type],  # Policy Type Index
-    # Add any other indexed features from your dataset
+    coverage_map[coverage],
+    education_map[education],
+    employment_map[employment_status],
+    location_map[location],
+    marital_map[marital_status],
+    policy_map[policy_type],
 ])
 
 # Prediction button
 if st.button("Predict Claim Likelihood"):
     try:
-        # Convert to numpy array and reshape
+        # Convert and scale input
         input_array = np.array(input_data).reshape(1, -1)
-        
-        # Scale the input (if your model requires scaling)
-        # input_scaled = scaler.transform(input_array)
-        
-        # Make prediction (uncomment when you have your model)
-        # prediction = model.predict(input_scaled)[0]
-        # prediction_proba = model.predict_proba(input_scaled)[0][1]
-        
-        # For demo purposes - replace with actual model prediction
-        prediction = 0  # Replace with actual prediction
-        prediction_proba = 0.35  # Replace with actual probability
-        
-        # Display results
+        input_scaled = scaler.transform(input_array)
+
+        # Actual prediction
+        prediction = model.predict(input_scaled)[0]
+        prediction_proba = model.predict_proba(input_scaled)[0][1]
+
+        # Display prediction
         if prediction == 1:
             st.error(f"High claim risk predicted ({prediction_proba*100:.1f}% probability)")
             st.write("Recommended actions: Review policy, consider risk mitigation strategies")
         else:
-            st.success(f"Low claim risk predicted ({100-prediction_proba*100:.1f}% probability)")
+            st.success(f"Low claim risk predicted ({100 - prediction_proba*100:.1f}% probability)")
             st.write("Customer appears low-risk")
-            
-        # Show more detailed output
+
+        # Expand for details
         with st.expander("Detailed Prediction Information"):
             st.write("Raw input features:", input_data)
-            # st.write("Scaled features:", input_scaled.tolist()[0])
+            st.write("Scaled features:", input_scaled.tolist()[0])
             st.write(f"Prediction confidence: {prediction_proba*100:.1f}%")
-            
+
     except Exception as e:
         st.error(f"An error occurred during prediction: {str(e)}")
 
-# Add some explanatory text
 st.markdown("""
-**Note:** This is a demo insurance claim prediction app. 
-For actual deployment, you would need to:
-1. Train a model on your historical data
-2. Save the model and scaler as .pkl files
-3. Uncomment the loading and prediction code
+**Note:** This is a working insurance claim prediction app using a trained model.
+Ensure the feature order and transformations match your training pipeline.
 """)
